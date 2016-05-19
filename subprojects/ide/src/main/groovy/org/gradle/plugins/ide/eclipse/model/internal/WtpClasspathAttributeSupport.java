@@ -55,7 +55,13 @@ public class WtpClasspathAttributeSupport {
     public WtpClasspathAttributeSupport(Project project, EclipseModel model) {
         this.isUtilityProject = !project.getPlugins().hasPlugin(WarPlugin.class) && !project.getPlugins().hasPlugin(EarPlugin.class);
         Ear ear = (Ear) project.getTasks().findByName(EarPlugin.EAR_TASK_NAME);
-        this.libDirName = ear == null ? "/WEB-INF/lib" : ear.getLibDirName();
+        if (ear == null) {
+           libDirName = "/WEB-INF/lib";
+        } else if (ear.getLibDirName().startsWith("/")) {
+            libDirName = ear.getLibDirName();
+        } else {
+            libDirName = "/" + ear.getLibDirName();
+        }
         EclipseWtp eclipseWtp = model.getWtp();
         EclipseWtpComponent wtpComponent = eclipseWtp.getComponent();
         Set<Configuration> rootConfigs = wtpComponent.getRootConfigurations();
