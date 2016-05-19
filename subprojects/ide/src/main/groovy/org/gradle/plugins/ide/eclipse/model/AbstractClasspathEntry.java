@@ -40,7 +40,7 @@ public abstract class AbstractClasspathEntry implements ClasspathEntry {
     protected String path;
     protected boolean exported;
     protected Set<AccessRule> accessRules;
-    protected final Map<String, Object> entryAttributes;
+    protected Map<String, Object> entryAttributes;
 
     public AbstractClasspathEntry(Node node) {
         path = normalizePath((String) node.attribute("path"));
@@ -248,6 +248,10 @@ public abstract class AbstractClasspathEntry implements ClasspathEntry {
     @Override
     public String toString() {
         return "{path='" + path + "', nativeLibraryLocation='" + getNativeLibraryLocation() + "', exported=" + exported + ", accessRules=" + accessRules + "}";
+    }
+
+    public void setEntryAttributes(Map<String, Object> entryAttributes) {
+        this.entryAttributes = entryAttributes;
     }
 }
 

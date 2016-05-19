@@ -54,9 +54,9 @@ dependencies {
         // Classpath
         def classpath = classpath
         classpath.assertHasLibs('guava-18.0.jar', 'junit-4.12.jar', 'hamcrest-core-1.3.jar')
-        classpath.lib('guava-18.0.jar').assertHasNoDeploymentAttributes() // Probably not right
-        classpath.lib('junit-4.12.jar').assertHasNoDeploymentAttributes()
-        classpath.lib('hamcrest-core-1.3.jar').assertHasNoDeploymentAttributes()
+        classpath.lib('guava-18.0.jar').assertIsExcludedFromDeployment()
+        classpath.lib('junit-4.12.jar').assertIsExcludedFromDeployment()
+        classpath.lib('hamcrest-core-1.3.jar').assertIsExcludedFromDeployment()
 
         // Facets
         def facets = wtpFacets

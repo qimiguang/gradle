@@ -300,9 +300,10 @@ public class EclipseClasspath {
      * Calculates, resolves and returns dependency entries of this classpath.
      */
     public List<ClasspathEntry> resolveDependencies() {
-        ClasspathFactory classpathFactory = new ClasspathFactory();
-        List<ClasspathEntry> entries = classpathFactory.createEntries(this);
-        new UnresolvedDependenciesLogger().log(classpathFactory.getUnresolvedDependencies(this));
+        // Optimization: don't resolve dependencies twice.
+        ClasspathFactory classpathFactory = new ClasspathFactory(this);
+        List<ClasspathEntry> entries = classpathFactory.createEntries();
+        new UnresolvedDependenciesLogger().log(classpathFactory.getUnresolvedDependencies());
         return entries;
     }
 

@@ -52,11 +52,10 @@ dependencies {
         project.assertHasJavaFacetNatures()
         project.assertHasJavaFacetBuilders()
 
-        // Classpath
+        // Classpath and deployment
         def classpath = classpath
-        classpath.assertHasLibs('guava-18.0.jar', 'javax.servlet-api-3.1.0.jar', 'junit-4.12.jar', 'hamcrest-core-1.3.jar', 'jstl-1.2.jar')
-        classpath.lib('guava-18.0.jar').assertIsExcludedFromDeployment() // Is deployed using component definition instead
-        classpath.lib('javax.servlet-api-3.1.0.jar').assertIsExcludedFromDeployment()
+        classpath.assertHasLibs('guava-18.0.jar', 'junit-4.12.jar', 'hamcrest-core-1.3.jar', 'jstl-1.2.jar')
+        classpath.lib('guava-18.0.jar').assertIsDeployedTo("/WEB-INF/lib")
         classpath.lib('jstl-1.2.jar').assertIsExcludedFromDeployment()
         classpath.lib('junit-4.12.jar').assertIsExcludedFromDeployment()
         classpath.lib('hamcrest-core-1.3.jar').assertIsExcludedFromDeployment()
@@ -68,14 +67,13 @@ dependencies {
         facets.assertFacetVersion("jst.web", "2.4")
         facets.assertFacetVersion("jst.java", "6.0")
 
-        // Deployment
+        // Component descroptor
         def component = wtpComponent
         component.deployName == 'web'
         component.resources.size() == 3
         component.sourceDirectory('src/main/java').assertDeployedAt('/WEB-INF/classes')
         component.sourceDirectory('src/main/resources').assertDeployedAt('/WEB-INF/classes')
         component.sourceDirectory('src/main/webapp').assertDeployedAt('/')
-        component.modules.size() == 1
-        component.lib('guava-18.0.jar').assertDeployedAt('/WEB-INF/lib')
+        component.modules.isEmpty();
     }
 }
