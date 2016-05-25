@@ -31,6 +31,7 @@ class SingleUseDaemonIntegrationTest extends AbstractIntegrationSpec {
 
     def setup() {
         executer.requireIsolatedDaemons()
+        turnOffPersistentDaemon()
     }
 
     def "forks build when JVM args are requested"() {
@@ -154,19 +155,6 @@ assert System.getProperty('some-prop') == 'some-value'
         wasNotForked()
     }
 
-    def "does not print suggestion to use the daemon for a single use daemon"() {
-        given:
-        requireJvmArg('-Xmx64m')
-
-        when:
-        succeeds()
-
-        then:
-        !output.contains(DaemonUsageSuggestionIntegrationTest.DAEMON_USAGE_SUGGESTION_MESSAGE)
-        wasForked()
-        daemons.daemon.stops()
-    }
-
     def "does not print daemon startup message for a single use daemon"() {
         given:
         requireJvmArg('-Xmx64m')
@@ -182,6 +170,10 @@ assert System.getProperty('some-prop') == 'some-value'
 
     private def requireJvmArg(String jvmArg) {
         file('gradle.properties') << "org.gradle.jvmargs=$jvmArg"
+    }
+
+    private def turnOffPersistentDaemon() {
+        file('gradle.properties') << "org.gradle.daemon=false"
     }
 
     private def runWithJvmArg(String jvmArg) {
