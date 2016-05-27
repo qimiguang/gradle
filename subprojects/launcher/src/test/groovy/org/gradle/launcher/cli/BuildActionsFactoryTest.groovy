@@ -148,7 +148,6 @@ class BuildActionsFactoryTest extends Specification {
 
     void isInProcess(def action) {
         assert action instanceof RunBuildAction
-        // REVIEWME: this really ought to be InProcessBuildActionExecuter
         assert action.executer instanceof ContinuousBuildActionExecuter
     }
 

@@ -74,6 +74,7 @@ public class DefaultDaemonCommandExecuter implements DaemonCommandExecuter {
             new LogToClient(loggingOutput, daemonDiagnostics), // from this point down, logging is sent back to the client
             healthServices.getHealthTrackerAction(),
             new ForwardClientInput(),
+            new RequestStopIfSingleUsedDaemon(),
             new ResetDeprecationLogger(),
             new WatchForDisconnection(),
             new ExecuteBuild(actionExecuter, contextServices)
