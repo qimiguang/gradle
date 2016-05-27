@@ -16,28 +16,27 @@
 package org.gradle.plugins.ide.eclipse
 
 class EclipseWtpJavaProjectIntegrationTest extends AbstractEclipseIntegrationSpec {
-    // TODO (donat) verify whether there is a test for the non-utility project counterpart
     def "generates configuration files for a Java project"() {
         file('src/main/java').mkdirs()
         file('src/main/resources').mkdirs()
 
         settingsFile << "rootProject.name = 'java'"
 
-        buildFile << """
-apply plugin: 'eclipse-wtp'
-apply plugin: 'java'
+        buildFile <<
+        """apply plugin: 'eclipse-wtp'
+           apply plugin: 'java'
 
-repositories {
-    jcenter()
-}
+           repositories {
+               jcenter()
+           }
 
-sourceCompatibility = 1.6
+           sourceCompatibility = 1.6
 
-dependencies {
-    compile 'com.google.guava:guava:18.0'
-    testCompile "junit:junit:4.12"
-}
-"""
+           dependencies {
+               compile 'com.google.guava:guava:18.0'
+               testCompile "junit:junit:4.12"
+           }
+        """
 
         when:
         run "eclipse"
@@ -51,7 +50,7 @@ dependencies {
         // Classpath
         def classpath = classpath
         classpath.assertHasLibs('guava-18.0.jar', 'junit-4.12.jar', 'hamcrest-core-1.3.jar')
-        classpath.lib('guava-18.0.jar').assertIsExcludedFromDeployment() // utility project doesn't have deployable dependencies
+        classpath.lib('guava-18.0.jar').assertIsExcludedFromDeployment()
         classpath.lib('junit-4.12.jar').assertIsExcludedFromDeployment()
         classpath.lib('hamcrest-core-1.3.jar').assertIsExcludedFromDeployment()
 
@@ -62,12 +61,12 @@ dependencies {
         facets.assertFacetVersion("jst.utility", "1.0")
         facets.assertFacetVersion("jst.java", "6.0")
 
-        // Deployment
+        // Component
         def component = wtpComponent
         component.deployName == 'java'
         component.resources.size() == 2
         component.sourceDirectory('src/main/java').assertDeployedAt('/')
         component.sourceDirectory('src/main/resources').assertDeployedAt('/')
-        component.modules.isEmpty() // Deployed via classpath instead
+        component.modules.isEmpty()
     }
 }

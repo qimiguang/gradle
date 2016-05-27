@@ -24,38 +24,38 @@ class EclipseWtpWebAndJavaProjectIntegrationTest extends AbstractEclipseIntegrat
         file('web/src/main/java').mkdirs()
         file('web/src/main/webapp').mkdirs()
 
-        buildFile << """
-subprojects {
-    apply plugin: 'eclipse-wtp'
+        buildFile <<
+        """subprojects {
+               apply plugin: 'eclipse-wtp'
 
-    repositories {
-        jcenter()
-    }
-}
-project(':web') {
-    apply plugin: 'war'
+               repositories {
+                   jcenter()
+               }
+           }
+           project(':web') {
+               apply plugin: 'war'
 
-    sourceCompatibility = 1.6
+               sourceCompatibility = 1.6
 
-    dependencies {
-        providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
-        compile 'org.apache.commons:commons-lang3:3.0'
-        compile project(':java')
-        testCompile "junit:junit:4.12"
-    }
-}
-project(':java') {
-    apply plugin: 'java'
+               dependencies {
+                   providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
+                   compile 'org.apache.commons:commons-lang3:3.0'
+                   compile project(':java')
+                   testCompile "junit:junit:4.12"
+               }
+           }
+            project(':java') {
+                apply plugin: 'java'
 
-    sourceCompatibility = 1.6
+                sourceCompatibility = 1.6
 
-    dependencies {
-        compile 'com.google.guava:guava:18.0'
-        compile 'javax.servlet:javax.servlet-api:3.1.0'
-        testCompile "junit:junit:4.12"
-    }
-}
-"""
+                dependencies {
+                    compile 'com.google.guava:guava:18.0'
+                    compile 'javax.servlet:javax.servlet-api:3.1.0'
+                    testCompile "junit:junit:4.12"
+                }
+            }
+            """
 
         when:
         run "eclipse"
@@ -93,7 +93,7 @@ project(':java') {
         webFacets.assertHasFixedFacets("jst.java", "jst.web")
         webFacets.assertHasInstalledFacets("jst.web", "jst.java")
 
-        // Deployment
+        // Component
         def javaComponent = wtpComponent('java')
         javaComponent.deployName == 'java'
         javaComponent.resources.size() == 1

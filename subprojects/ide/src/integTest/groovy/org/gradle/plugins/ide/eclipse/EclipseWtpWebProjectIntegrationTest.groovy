@@ -25,23 +25,23 @@ class EclipseWtpWebProjectIntegrationTest extends AbstractEclipseIntegrationSpec
 
         settingsFile << "rootProject.name = 'web'"
 
-        buildFile << """
-apply plugin: 'eclipse-wtp'
-apply plugin: 'war'
+        buildFile <<
+        """apply plugin: 'war'
+           apply plugin: 'eclipse-wtp'
 
-sourceCompatibility = 1.6
+           sourceCompatibility = 1.6
 
-repositories {
-    jcenter()
-}
+           repositories {
+               jcenter()
+           }
 
-dependencies {
-    compile 'com.google.guava:guava:18.0'
-    compileOnly 'jstl:jstl:1.2'
-    providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
-    testCompile "junit:junit:4.12"
-}
-"""
+           dependencies {
+               compile 'com.google.guava:guava:18.0'
+               compileOnly 'jstl:jstl:1.2'
+               providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
+               testCompile "junit:junit:4.12"
+           }
+        """
 
         when:
         run "eclipse"
@@ -52,7 +52,7 @@ dependencies {
         project.assertHasJavaFacetNatures()
         project.assertHasJavaFacetBuilders()
 
-        // Classpath and deployment
+        // Classpath
         def classpath = classpath
         classpath.assertHasLibs('guava-18.0.jar', 'junit-4.12.jar', 'hamcrest-core-1.3.jar', 'jstl-1.2.jar')
         classpath.lib('guava-18.0.jar').assertIsDeployedTo("/WEB-INF/lib")
@@ -67,7 +67,7 @@ dependencies {
         facets.assertFacetVersion("jst.web", "2.4")
         facets.assertFacetVersion("jst.java", "6.0")
 
-        // Component descroptor
+        // Component
         def component = wtpComponent
         component.deployName == 'web'
         component.resources.size() == 3
