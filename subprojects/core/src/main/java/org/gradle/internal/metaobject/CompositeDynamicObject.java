@@ -94,24 +94,53 @@ public abstract class CompositeDynamicObject extends AbstractDynamicObject {
 
     @Override
     public void invokeMethod(String name, InvokeMethodResult result, Object... arguments) {
+        if (arguments.length==1 && arguments[0] instanceof Closure) {
+            invokeMethodThenPropertyClosure(name, result, arguments);
+            return;
+        }
+        invokeMethodOrPropertyClosure(name, result, arguments);
+    }
+
+    private void invokeMethodThenPropertyClosure(String name, InvokeMethodResult result, Object[] arguments) {
         for (DynamicObject object : objects) {
-            object.invokeMethod(name, result, arguments);
-            if (result.isFound()) {
+            if (lookupMethod(name, result, arguments, object)) {
                 return;
             }
-            GetPropertyResult propertyLookup = new GetPropertyResult();
-            object.getProperty(name, propertyLookup);
-            if (propertyLookup.isFound()) {
-                Object property = propertyLookup.getValue();
-                if (property instanceof Closure) {
-                    Closure closure = (Closure) property;
-                    closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-                    Object value = closure.call(arguments);
-                    result.result(value);
-                    return;
-                }
+        }
+        lookupPropertyClosure(name, result, arguments, this);
+    }
+
+    private void invokeMethodOrPropertyClosure(String name, InvokeMethodResult result, Object[] arguments) {
+        for (DynamicObject object : objects) {
+            if (lookupMethod(name, result, arguments, object)
+                || lookupPropertyClosure(name, result, arguments, object)) {
+                break;
+            }
+        }
+    }
+
+    private boolean lookupMethod(String name, InvokeMethodResult result, Object[] arguments, DynamicObject object) {
+        object.invokeMethod(name, result, arguments);
+        if (result.isFound()) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean lookupPropertyClosure(String name, InvokeMethodResult result, Object[] arguments, DynamicObject object) {
+        GetPropertyResult propertyLookup = new GetPropertyResult();
+        object.getProperty(name, propertyLookup);
+        if (propertyLookup.isFound()) {
+            Object property = propertyLookup.getValue();
+            if (property instanceof Closure) {
+                Closure closure = (Closure) property;
+                closure.setResolveStrategy(Closure.DELEGATE_FIRST);
+                Object value = closure.call(arguments);
+                result.result(value);
+                return true;
             }
         }
 
+        return false;
     }
 }
