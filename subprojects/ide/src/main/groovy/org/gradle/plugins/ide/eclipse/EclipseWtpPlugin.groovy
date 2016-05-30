@@ -30,9 +30,7 @@ import org.gradle.api.tasks.bundling.War
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.plugins.ear.EarPlugin
 import org.gradle.plugins.ear.EarPluginConvention
-import org.gradle.plugins.ide.eclipse.model.AbstractClasspathEntry
 import org.gradle.plugins.ide.eclipse.model.Classpath
-import org.gradle.plugins.ide.eclipse.model.ClasspathEntry
 import org.gradle.plugins.ide.eclipse.model.EclipseModel
 import org.gradle.plugins.ide.eclipse.model.EclipseWtp
 import org.gradle.plugins.ide.eclipse.model.Facet
@@ -65,18 +63,14 @@ class EclipseWtpPlugin extends IdePlugin {
     @Override protected void onApply(Project project) {
         project.pluginManager.apply(EclipsePlugin)
 
-        // the Eclipse plugin may apply this plugin for war and ear projects. The withType
-        // method ensures that the eclipse plugin application fully finishes before.
-        project.plugins.withType(EclipsePlugin) {
             def model = project.extensions.getByType(EclipseModel)
             model.wtp = instantiator.newInstance(EclipseWtp, model.classpath)
 
             lifecycleTask.description = 'Generates Eclipse wtp configuration files.'
             cleanTask.description = 'Cleans Eclipse wtp configuration files.'
 
-            def delegatePlugin = project.plugins.getPlugin(EclipsePlugin)
-            delegatePlugin.lifecycleTask.dependsOn(lifecycleTask)
-            delegatePlugin.cleanTask.dependsOn(cleanTask)
+            project.tasks.getByName(EclipsePlugin.ECLIPSE_TASK_NAME).dependsOn(lifecycleTask)
+            project.tasks.getByName(cleanName(EclipsePlugin.ECLIPSE_TASK_NAME)).dependsOn(cleanTask)
 
             configureEclipseProject(project)
             configureEclipseWtpComponent(project, model)
@@ -84,7 +78,6 @@ class EclipseWtpPlugin extends IdePlugin {
 
             // do this after wtp is configured because wtp config is required to update classpath properly
             configureEclipseClasspath(project, model)
-        };
     }
 
     private void configureEclipseClasspath(Project project, EclipseModel model) {
@@ -96,7 +89,7 @@ class EclipseWtpPlugin extends IdePlugin {
             }
 
             model.classpath.file.whenMerged { Classpath classpath ->
-                defineWtpDeploymentAttributes(model, classpath)
+                new WtpClasspathAttributeSupport(project, model).enhance(classpath)
             }
         }
 
@@ -105,16 +98,6 @@ class EclipseWtpPlugin extends IdePlugin {
         }
     }
 
-    private void defineWtpDeploymentAttributes(EclipseModel model, Classpath classpath) {
-        WtpClasspathAttributeSupport wtpSupport = new WtpClasspathAttributeSupport(project, model)
-        for (ClasspathEntry entry : classpath.getEntries()) {
-            if (entry instanceof AbstractClasspathEntry) {
-                AbstractClasspathEntry classpathEntry = (AbstractClasspathEntry) entry;
-                Map<String, Object> wtpEntries = wtpSupport.createDeploymentAttribute(classpathEntry)
-                classpathEntry.getEntryAttributes().putAll(wtpEntries);
-            }
-        }
-    }
 
     private void configureEclipseWtpComponent(Project project, EclipseModel model) {
         maybeAddTask(project, this, ECLIPSE_WTP_COMPONENT_TASK_NAME, GenerateEclipseWtpComponent) { GenerateEclipseWtpComponent task ->

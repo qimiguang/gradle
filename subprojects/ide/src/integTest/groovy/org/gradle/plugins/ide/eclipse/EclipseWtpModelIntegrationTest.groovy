@@ -508,7 +508,7 @@ project(':contrib') {
                 if(it instanceof AbstractClasspathEntry) {
                   //some people have workarounds in their builds and configure the component dependency,
                   //just like here:
-                  it.entryAttributes[AbstractClasspathEntry.COMPONENT_DEPENDENCY_ATTRIBUTE] = 'WEB-INF/lib'
+                  it.entryAttributes['org.eclipse.jst.component.dependency'] = 'WEB-INF/lib'
                 }
               }
             }
@@ -524,13 +524,13 @@ project(':contrib') {
 
     @Test
     @Issue("GRADLE-1412")
-    void "dependent project's library and variable classpath entries contain necessary dependency attribute"() {
+    void "dependent utility project's library and variable classpath entries contain necessary dependency attribute"() {
         //given
         file('libs/myFoo.jar').touch()
         file('settings.gradle') << "include 'someLib'"
 
         file("build.gradle") << """
-            apply plugin: 'war'
+            apply plugin: 'java'
             apply plugin: 'eclipse-wtp'
 
             dependencies {
@@ -539,6 +539,45 @@ project(':contrib') {
 
             project(':someLib') {
                 apply plugin: 'java'
+                apply plugin: 'eclipse-wtp'
+
+                repositories { mavenCentral() }
+
+                dependencies {
+                  runtime 'commons-io:commons-io:1.4'
+                  runtime files('libs/myFoo.jar')
+                }
+
+                eclipse.pathVariables MY_LIBS: file('libs')
+            }
+        """
+
+        //when
+        executer.withTasks("eclipse").run()
+
+        //then
+        def classpath = classpath('someLib')
+
+        classpath.lib('commons-io-1.4.jar').assertIsExcludedFromDeployment()
+        classpath.lib('myFoo.jar').assertIsExcludedFromDeployment()
+    }
+
+    @Test
+    @Issue("GRADLE-1412")
+    void "dependent web project's library and variable classpath entries contain necessary dependency attribute"() {
+        //given
+        file('libs/myFoo.jar').touch()
+        file('settings.gradle') << "include 'someLib'"
+
+        file("build.gradle") << """
+            apply plugin: 'java'
+            apply plugin: 'eclipse-wtp'
+
+            dependencies {
+                compile project(':someLib')
+            }
+
+            project(':someLib') {
                 apply plugin: 'war'
                 apply plugin: 'eclipse-wtp'
 

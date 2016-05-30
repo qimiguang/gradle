@@ -21,12 +21,8 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.internal.artifacts.ivyservice.projectmodule.CompositeBuildIdeProjectResolver;
-import org.gradle.api.plugins.PluginContainer;
-import org.gradle.api.plugins.WarPlugin;
 import org.gradle.internal.service.ServiceRegistry;
-import org.gradle.plugins.ear.EarPlugin;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
-import org.gradle.plugins.ide.eclipse.EclipseWtpPlugin;
 import org.gradle.plugins.ide.eclipse.model.AbstractClasspathEntry;
 import org.gradle.plugins.ide.eclipse.model.AbstractLibrary;
 import org.gradle.plugins.ide.eclipse.model.BuildCommand;
@@ -107,7 +103,6 @@ public class EclipseModelBuilder implements ProjectToolingModelBuilder {
         rootGradleProject = gradleProjectBuilder.buildAll(project);
         tasksFactory.collectTasks(root);
         applyEclipsePlugin(root);
-        applyEclipseWtpPluginOnWebProjects(root);
         buildHierarchy(root);
         populate(root);
         return result;
@@ -119,20 +114,6 @@ public class EclipseModelBuilder implements ProjectToolingModelBuilder {
             p.getPluginManager().apply(EclipsePlugin.class);
         }
         root.getPlugins().getPlugin(EclipsePlugin.class).makeSureProjectNamesAreUnique();
-    }
-
-    private void applyEclipseWtpPluginOnWebProjects(Project root) {
-        Set<Project> allProjects = root.getAllprojects();
-        for (Project p : allProjects) {
-            if (isWebProject(p)) {
-                p.getPluginManager().apply(EclipseWtpPlugin.class);
-            }
-        }
-    }
-
-    private boolean isWebProject(Project project) {
-        PluginContainer container = project.getPlugins();
-        return container.hasPlugin(WarPlugin.class) || container.hasPlugin(EarPlugin.class);
     }
 
     private DefaultEclipseProject buildHierarchy(Project project) {
@@ -256,9 +237,10 @@ public class EclipseModelBuilder implements ProjectToolingModelBuilder {
     private static List<DefaultClasspathAttribute> createAttributes(AbstractClasspathEntry classpathEntry) {
         List<DefaultClasspathAttribute> result = Lists.newArrayList();
         Map<String, Object> attributes = classpathEntry.getEntryAttributes();
-        for (String key : attributes.keySet()) {
-            Object value = attributes.get(key);
-            result.add(new DefaultClasspathAttribute(key, value == null ? "" : value.toString()));
+        attributes.entrySet();
+        for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+            Object value = entry.getValue();
+            result.add(new DefaultClasspathAttribute(entry.getKey(), value == null ? "" : value.toString()));
         }
         return result;
     }

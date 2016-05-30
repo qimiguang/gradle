@@ -133,7 +133,6 @@ class ToolingApiEclipseModelWtpClasspathAttributesCrossVersionSpec extends Tooli
     }
 
     def "Root wtp dependencies present in minusConfigurations are excluded from deployment"() {
-        // TODO (donat) revert and exclude 3.0, add coverage for 3.0 (lib+root)
         given:
         buildFile <<
         """apply plugin: 'java'

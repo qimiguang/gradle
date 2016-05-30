@@ -17,7 +17,6 @@
 package org.gradle.plugins.ide.eclipse.model.internal;
 
 import com.google.common.collect.Lists;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.plugins.ide.eclipse.model.AbstractClasspathEntry;
 import org.gradle.plugins.ide.eclipse.model.AbstractLibrary;
@@ -36,24 +35,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class DependenciesCreator {
+public class EclipseDependenciesCreator {
 
-    protected final IdeDependenciesExtractor dependenciesExtractor;
-    protected final EclipseClasspath classpath;
+    private final IdeDependenciesExtractor dependenciesExtractor;
+    private final EclipseClasspath classpath;
 
-    public DependenciesCreator(EclipseClasspath classpath) {
+    public EclipseDependenciesCreator(EclipseClasspath classpath) {
         this.dependenciesExtractor = new IdeDependenciesExtractor();
         this.classpath = classpath;
     }
-
-    protected Collection<Configuration> getPlusConfig() {
-        return classpath.getPlusConfigurations();
-    }
-
-    protected Collection<Configuration> getMinusConfigs() {
-        return classpath.getMinusConfigurations();
-    }
-
 
     public List<AbstractClasspathEntry> createDependencyEntries() {
         List<AbstractClasspathEntry> result = Lists.newArrayList();
@@ -65,13 +55,13 @@ public class DependenciesCreator {
     }
 
     public Collection<UnresolvedIdeRepoFileDependency> unresolvedExternalDependencies() {
-        return dependenciesExtractor.unresolvedExternalDependencies(getPlusConfig(), classpath.getMinusConfigurations());
+        return dependenciesExtractor.unresolvedExternalDependencies(classpath.getPlusConfigurations(), classpath.getMinusConfigurations());
     }
 
     private List<AbstractClasspathEntry> createProjectDependencies() {
         ArrayList<AbstractClasspathEntry> projects = Lists.newArrayList();
 
-        Collection<IdeProjectDependency> projectDependencies = dependenciesExtractor.extractProjectDependencies(classpath.getProject(), getPlusConfig(), getMinusConfigs());
+        Collection<IdeProjectDependency> projectDependencies = dependenciesExtractor.extractProjectDependencies(classpath.getProject(), classpath.getPlusConfigurations(), classpath.getMinusConfigurations());
         for (IdeProjectDependency projectDependency : projectDependencies) {
             projects.add(new ProjectDependencyBuilder().build(projectDependency));
         }
@@ -83,16 +73,15 @@ public class DependenciesCreator {
         boolean downloadSources = classpath.isDownloadSources();
         boolean downloadJavadoc = classpath.isDownloadJavadoc();
 
-        Collection<IdeExtendedRepoFileDependency> repoFileDependencies = dependenciesExtractor.extractRepoFileDependencies(classpath.getProject().getDependencies(), getPlusConfig(), getMinusConfigs(), downloadSources, downloadJavadoc);
+        Collection<IdeExtendedRepoFileDependency> repoFileDependencies = dependenciesExtractor.extractRepoFileDependencies(classpath.getProject().getDependencies(), classpath.getPlusConfigurations(), classpath.getMinusConfigurations(), downloadSources, downloadJavadoc);
         for (IdeExtendedRepoFileDependency dependency : repoFileDependencies) {
             libraries.add(createLibraryEntry(dependency.getFile(), dependency.getSourceFile(), dependency.getJavadocFile(), classpath, dependency.getId()));
         }
 
-        Collection<IdeLocalFileDependency> localFileDependencies = dependenciesExtractor.extractLocalFileDependencies(getPlusConfig(), getMinusConfigs());
+        Collection<IdeLocalFileDependency> localFileDependencies = dependenciesExtractor.extractLocalFileDependencies(classpath.getPlusConfigurations(), classpath.getMinusConfigurations());
         for (IdeLocalFileDependency it : localFileDependencies) {
             libraries.add(createLibraryEntry(it.getFile(), null, null, classpath, null));
         }
-
         return libraries;
     }
 

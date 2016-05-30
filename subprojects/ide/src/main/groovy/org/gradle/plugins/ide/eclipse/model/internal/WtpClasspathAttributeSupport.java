@@ -20,11 +20,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.plugins.ear.Ear;
 import org.gradle.plugins.ear.EarPlugin;
+import org.gradle.plugins.ide.eclipse.model.AbstractClasspathEntry;
 import org.gradle.plugins.ide.eclipse.model.AbstractLibrary;
+import org.gradle.plugins.ide.eclipse.model.Classpath;
 import org.gradle.plugins.ide.eclipse.model.ClasspathEntry;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.eclipse.model.EclipseWtp;
@@ -47,8 +48,6 @@ public class WtpClasspathAttributeSupport {
 
     private final String libDirName;
     private final boolean isUtilityProject;
-    private final Set<ModuleVersionIdentifier> rootConfigModuleVersions;
-    private final Set<ModuleVersionIdentifier> libConfigModuleVersions;
     private final Set<File> rootConfigFiles;
     private final Set<File> libConfigFiles;
 
@@ -67,30 +66,38 @@ public class WtpClasspathAttributeSupport {
         Set<Configuration> rootConfigs = wtpComponent.getRootConfigurations();
         Set<Configuration> libConfigs = wtpComponent.getLibConfigurations();
         Set<Configuration> minusConfigs = wtpComponent.getMinusConfigurations();
-        this.rootConfigModuleVersions = Sets.newHashSet();
-        this.rootConfigFiles = Sets.newHashSet();
-        this.libConfigModuleVersions = Sets.newHashSet();
-        this.libConfigFiles = Sets.newHashSet();
-        IdeDependenciesExtractor depsExtractor = new IdeDependenciesExtractor();
-        populateVersionsAndFiles(depsExtractor, rootConfigs, minusConfigs, rootConfigModuleVersions, rootConfigFiles);
-        populateVersionsAndFiles(depsExtractor, libConfigs, minusConfigs, libConfigModuleVersions, libConfigFiles);
+        rootConfigFiles = collectFilesFromConfigs(rootConfigs, minusConfigs);
+        libConfigFiles = collectFilesFromConfigs(libConfigs, minusConfigs);
     }
 
-    private void populateVersionsAndFiles(IdeDependenciesExtractor depsExtractor, Set<Configuration> configs, Set<Configuration> minusConfigs, Set<ModuleVersionIdentifier> resultVersions, Set<File> resultFiles) {
-        Collection<IdeExtendedRepoFileDependency> dependencies = depsExtractor.resolvedExternalDependencies(configs, minusConfigs);
+    private static Set<File> collectFilesFromConfigs(Set<Configuration> configs, Set<Configuration> minusConfigs) {
+        Set<File> resultFiles = Sets.newHashSet();
+        IdeDependenciesExtractor extractor = new IdeDependenciesExtractor();
+
+        Collection<IdeExtendedRepoFileDependency> dependencies = extractor.resolvedExternalDependencies(configs, minusConfigs);
         for (IdeExtendedRepoFileDependency dependency : dependencies) {
-            resultVersions.add(dependency.getId());
             resultFiles.add(dependency.getFile());
         }
 
-        Collection<IdeLocalFileDependency> localDependencies = depsExtractor.extractLocalFileDependencies(configs, minusConfigs);
+        Collection<IdeLocalFileDependency> localDependencies = extractor.extractLocalFileDependencies(configs, minusConfigs);
         for (IdeLocalFileDependency dependency : localDependencies) {
             resultFiles.add(dependency.getFile());
         }
+
+        return resultFiles;
     }
 
+    public void enhance(Classpath classpath) {
+        for (ClasspathEntry entry : classpath.getEntries()) {
+            if (entry instanceof AbstractClasspathEntry) {
+                AbstractClasspathEntry classpathEntry = (AbstractClasspathEntry) entry;
+                Map<String, Object> wtpEntries = createDeploymentAttribute(classpathEntry);
+                classpathEntry.getEntryAttributes().putAll(wtpEntries);
+            }
+        }
+    }
 
-    public Map<String, Object> createDeploymentAttribute(ClasspathEntry entry) {
+    private Map<String, Object> createDeploymentAttribute(ClasspathEntry entry) {
         if (entry instanceof AbstractLibrary) {
             return createDeploymentAttribute((AbstractLibrary) entry);
         } else if (entry instanceof ProjectDependency) {
@@ -101,26 +108,7 @@ public class WtpClasspathAttributeSupport {
     }
 
     private Map<String, Object> createDeploymentAttribute(AbstractLibrary entry) {
-        ModuleVersionIdentifier moduleVersion = entry.getModuleVersion();
-        if (moduleVersion != null) {
-            return createDeploymentAttribute(moduleVersion);
-        } else {
-            return createDeploymentAttribute(entry.getLibrary().getFile());
-        }
-    }
-
-    private Map<String, Object> createDeploymentAttribute(ModuleVersionIdentifier moduleVersion) {
-        if (!isUtilityProject) {
-            if (rootConfigModuleVersions.contains(moduleVersion)) {
-                return singleEntryMap(ATTRIBUTE_WTP_DEPLOYED, "/");
-            } else if (libConfigModuleVersions.contains(moduleVersion)) {
-                return singleEntryMap(ATTRIBUTE_WTP_DEPLOYED, libDirName);
-            }
-        }
-        return singleEntryMap(ATTRIBUTE_WTP_NONDEPLOYED, "");
-    }
-
-    private Map<String, Object> createDeploymentAttribute(File file) {
+        File file = entry.getLibrary().getFile();
         if (!isUtilityProject) {
             if (rootConfigFiles.contains(file)) {
                 return singleEntryMap(ATTRIBUTE_WTP_DEPLOYED, "/");

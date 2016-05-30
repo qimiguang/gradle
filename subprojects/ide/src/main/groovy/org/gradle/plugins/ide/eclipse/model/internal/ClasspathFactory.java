@@ -31,15 +31,11 @@ import java.util.List;
 public class ClasspathFactory {
 
     private final EclipseClasspath classpath;
-    private final DependenciesCreator dependenciesCreator;
+    private final EclipseDependenciesCreator dependenciesCreator;
 
     public ClasspathFactory(EclipseClasspath classpath) {
-        this(classpath, new DependenciesCreator(classpath));
-    }
-
-    public ClasspathFactory(EclipseClasspath classpath, DependenciesCreator dependenciesCreator) {
         this.classpath = classpath;
-        this.dependenciesCreator = dependenciesCreator;
+        this.dependenciesCreator = new EclipseDependenciesCreator(classpath);
     }
 
     public List<ClasspathEntry> createEntries() {

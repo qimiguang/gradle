@@ -34,8 +34,6 @@ import java.util.Set;
  */
 public abstract class AbstractClasspathEntry implements ClasspathEntry {
     private static final String NATIVE_LIBRARY_ATTRIBUTE = "org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY";
-    public static final String COMPONENT_NON_DEPENDENCY_ATTRIBUTE = "org.eclipse.jst.component.nondependency";
-    public static final String COMPONENT_DEPENDENCY_ATTRIBUTE = "org.eclipse.jst.component.dependency";
 
     protected String path;
     protected boolean exported;
@@ -192,20 +190,13 @@ public abstract class AbstractClasspathEntry implements ClasspathEntry {
         Map<String, Object> effectiveEntryAttrs = Maps.newHashMap();
         for (String key : entryAttributes.keySet()) {
             Object value = entryAttributes.get(key);
-            if ((value != null && !String.valueOf(value).isEmpty()) || COMPONENT_NON_DEPENDENCY_ATTRIBUTE.equals(key)) {
+            if (value != null) {
                 effectiveEntryAttrs.put(key, value);
             }
         }
 
         if (effectiveEntryAttrs.isEmpty()) {
             return;
-        }
-
-        if (effectiveEntryAttrs.containsKey(COMPONENT_DEPENDENCY_ATTRIBUTE)
-            && effectiveEntryAttrs.containsKey(COMPONENT_NON_DEPENDENCY_ATTRIBUTE)) {
-            //For conflicting component dependency entries, the non-dependency loses
-            //because it is our default and it means the user has configured something else.
-            effectiveEntryAttrs.remove(COMPONENT_NON_DEPENDENCY_ATTRIBUTE);
         }
 
         Node attributesNode;
@@ -248,10 +239,6 @@ public abstract class AbstractClasspathEntry implements ClasspathEntry {
     @Override
     public String toString() {
         return "{path='" + path + "', nativeLibraryLocation='" + getNativeLibraryLocation() + "', exported=" + exported + ", accessRules=" + accessRules + "}";
-    }
-
-    public void setEntryAttributes(Map<String, Object> entryAttributes) {
-        this.entryAttributes = entryAttributes;
     }
 }
 

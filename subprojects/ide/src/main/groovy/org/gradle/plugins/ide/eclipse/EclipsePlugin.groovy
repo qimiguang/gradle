@@ -316,23 +316,16 @@ class EclipsePlugin extends IdePlugin {
     }
 
     private void applyEclipseWtpPluginOnWebProjects(Project project) {
-        Action<Plugin<Project>> action = createActionToApplyEclipsePluginOnWebProjects()
+        Action<Plugin<Project>> action = createActionApplyingEclipseWtpPlugin()
         project.getPlugins().withType(WarPlugin.class, action);
         project.getPlugins().withType(EarPlugin.class, action);
     }
 
-    private Action<Plugin<Project>> createActionToApplyEclipsePluginOnWebProjects() {
+    private Action<Plugin<Project>> createActionApplyingEclipseWtpPlugin() {
         return new Action<Plugin<Project>>() {
             @Override
             public void execute(Plugin<Project> plugin) {
-                project.getPlugins().withType(EclipsePlugin.class, new Action<EclipsePlugin>() {
-                    @Override
-                    void execute(EclipsePlugin eclipsePlugin) {
-                        if (!project.getPlugins().hasPlugin(EclipsePlugin.class)) {
-                            project.getPlugins().apply(EclipseWtpPlugin.class);
-                        }
-                    }
-                })
+                project.getPluginManager().apply(EclipseWtpPlugin.class);
             }
         }
     }
