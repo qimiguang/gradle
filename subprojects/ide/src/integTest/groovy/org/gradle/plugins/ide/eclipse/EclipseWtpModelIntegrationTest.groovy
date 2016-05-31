@@ -508,7 +508,7 @@ project(':contrib') {
                 if(it instanceof AbstractClasspathEntry) {
                   //some people have workarounds in their builds and configure the component dependency,
                   //just like here:
-                  it.entryAttributes['org.eclipse.jst.component.dependency'] = 'WEB-INF/lib'
+                  it.entryAttributes[AbstractClasspathEntry.COMPONENT_DEPENDENCY_ATTRIBUTE] = 'WEB-INF/lib'
                 }
               }
             }
@@ -524,39 +524,32 @@ project(':contrib') {
 
     @Test
     @Issue("GRADLE-1412")
-    void "dependent utility project's library and variable classpath entries contain necessary dependency attribute"() {
+    void "utility project's library and variable classpath entries contain necessary dependency attribute"() {
         //given
         file('libs/myFoo.jar').touch()
         file('settings.gradle') << "include 'someLib'"
 
-        file("build.gradle") << """
-            apply plugin: 'java'
-            apply plugin: 'eclipse-wtp'
+        file("build.gradle") <<
+        """apply plugin: 'java'
+           apply plugin: 'eclipse-wtp'
 
-            dependencies {
-                compile project(':someLib')
-            }
+           repositories {
+               mavenCentral()
+           }
 
-            project(':someLib') {
-                apply plugin: 'java'
-                apply plugin: 'eclipse-wtp'
+           dependencies {
+               runtime 'commons-io:commons-io:1.4'
+               runtime files('libs/myFoo.jar')
+           }
 
-                repositories { mavenCentral() }
-
-                dependencies {
-                  runtime 'commons-io:commons-io:1.4'
-                  runtime files('libs/myFoo.jar')
-                }
-
-                eclipse.pathVariables MY_LIBS: file('libs')
-            }
+           eclipse.pathVariables MY_LIBS: file('libs')
         """
 
         //when
         executer.withTasks("eclipse").run()
 
         //then
-        def classpath = classpath('someLib')
+        def classpath = getClasspath()
 
         classpath.lib('commons-io-1.4.jar').assertIsExcludedFromDeployment()
         classpath.lib('myFoo.jar').assertIsExcludedFromDeployment()
@@ -564,39 +557,32 @@ project(':contrib') {
 
     @Test
     @Issue("GRADLE-1412")
-    void "dependent web project's library and variable classpath entries contain necessary dependency attribute"() {
+    void "web project's library and variable classpath entries contain necessary dependency attribute"() {
         //given
         file('libs/myFoo.jar').touch()
         file('settings.gradle') << "include 'someLib'"
 
-        file("build.gradle") << """
-            apply plugin: 'java'
-            apply plugin: 'eclipse-wtp'
+        file("build.gradle") <<
+        """apply plugin: 'war'
+           apply plugin: 'eclipse-wtp'
 
-            dependencies {
-                compile project(':someLib')
-            }
+           repositories {
+               mavenCentral()
+           }
 
-            project(':someLib') {
-                apply plugin: 'war'
-                apply plugin: 'eclipse-wtp'
+           dependencies {
+               runtime 'commons-io:commons-io:1.4'
+               runtime files('libs/myFoo.jar')
+           }
 
-                repositories { mavenCentral() }
-
-                dependencies {
-                  runtime 'commons-io:commons-io:1.4'
-                  runtime files('libs/myFoo.jar')
-                }
-
-                eclipse.pathVariables MY_LIBS: file('libs')
-            }
+           eclipse.pathVariables MY_LIBS: file('libs')
         """
 
         //when
         executer.withTasks("eclipse").run()
 
         //then
-        def classpath = classpath('someLib')
+        def classpath = getClasspath()
 
         classpath.lib('commons-io-1.4.jar').assertIsDeployedTo('/WEB-INF/lib')
         classpath.lib('myFoo.jar').assertIsDeployedTo('/WEB-INF/lib')

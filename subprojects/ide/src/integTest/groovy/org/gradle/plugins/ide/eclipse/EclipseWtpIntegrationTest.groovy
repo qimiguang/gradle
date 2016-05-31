@@ -62,6 +62,40 @@ dependencies {
         classpath2.lib("myartifactdep-1.0.jar")
     }
 
+    @Test
+    void respectsDependencySubstitutionRules() {
+        //given
+        mavenRepo.module("gradle", "foo").publish()
+        mavenRepo.module("gradle", "bar").publish()
+
+        //when
+        runEclipseTask(
+        """apply plugin: 'java'
+           apply plugin: 'war'
+           apply plugin: 'eclipse-wtp'
+
+           repositories {
+               maven { url "${mavenRepo.uri}" }
+           }
+
+           dependencies {
+               compile 'gradle:foo:1.0'
+           }
+
+           configurations.all {
+               resolutionStrategy.dependencySubstitution {
+                   substitute module("gradle:foo") with module("gradle:bar:1.0")
+               }
+           }
+        """)
+
+        //then
+        def classpath = getClasspath()
+
+        classpath.assertHasLibs('bar-1.0.jar')
+        classpath.lib('bar-1.0.jar').assertIsDeployedTo('/WEB-INF/lib')
+    }
+
     private generateEclipseFilesForWebProject(myArtifactVersion = "1.0") {
         def repoDir = file("repo")
         maven(repoDir).module("mygroup", "myartifact", myArtifactVersion).dependsOnModules("myartifactdep").publish()

@@ -42,10 +42,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class WtpClasspathAttributeSupport {
-
-    private static final String ATTRIBUTE_WTP_DEPLOYED = "org.eclipse.jst.component.dependency";
-    private static final String ATTRIBUTE_WTP_NONDEPLOYED = "org.eclipse.jst.component.nondependency";
-
     private final String libDirName;
     private final boolean isUtilityProject;
     private final Set<File> rootConfigFiles;
@@ -111,16 +107,16 @@ public class WtpClasspathAttributeSupport {
         File file = entry.getLibrary().getFile();
         if (!isUtilityProject) {
             if (rootConfigFiles.contains(file)) {
-                return singleEntryMap(ATTRIBUTE_WTP_DEPLOYED, "/");
+                return singleEntryMap(AbstractClasspathEntry.COMPONENT_DEPENDENCY_ATTRIBUTE, "/");
             } else if (libConfigFiles.contains(file)) {
-                return singleEntryMap(ATTRIBUTE_WTP_DEPLOYED, libDirName);
+                return singleEntryMap(AbstractClasspathEntry.COMPONENT_DEPENDENCY_ATTRIBUTE, libDirName);
             }
         }
-        return singleEntryMap(ATTRIBUTE_WTP_NONDEPLOYED, "");
+        return singleEntryMap(AbstractClasspathEntry.COMPONENT_NON_DEPENDENCY_ATTRIBUTE, "");
     }
 
     private Map<String, Object> createDeploymentAttribute(ProjectDependency entry) {
-        return singleEntryMap(ATTRIBUTE_WTP_NONDEPLOYED, "");
+        return singleEntryMap(AbstractClasspathEntry.COMPONENT_NON_DEPENDENCY_ATTRIBUTE, "");
     }
 
     private static Map<String, Object> singleEntryMap(String key, String value) {

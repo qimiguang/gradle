@@ -45,7 +45,7 @@ class ToolingApiEclipseModelClasspathAttributesCrossVersionSpec extends ToolingA
         def attributes = project.classpath[0].classpathAttributes
 
         then:
-        attributes.find { it.name == 'javadoc_location' && it.value.startsWith('jar:file:') }
+        attributes.find { it.name == 'javadoc_location' && it.value.contains('guava-18.0-javadoc.jar') }
     }
 
 }

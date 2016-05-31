@@ -34,6 +34,8 @@ import java.util.Set;
  */
 public abstract class AbstractClasspathEntry implements ClasspathEntry {
     private static final String NATIVE_LIBRARY_ATTRIBUTE = "org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY";
+    public static final String COMPONENT_NON_DEPENDENCY_ATTRIBUTE = "org.eclipse.jst.component.nondependency";
+    public static final String COMPONENT_DEPENDENCY_ATTRIBUTE = "org.eclipse.jst.component.dependency";
 
     protected String path;
     protected boolean exported;
